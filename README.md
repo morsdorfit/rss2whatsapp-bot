@@ -7,10 +7,10 @@ a simple bot to crawl a rssfeed and push the news artikels in a WhatsApp Group
 ## install
 install dependencies:
 ```
-pip install tweepy
+
 pip install feedparser
 pip install dateparser
-pip install dotenv
+
 ```
 
 execute script
