@@ -1,9 +1,15 @@
-import feedparser, dateparser, os, os.path, json, tweepy
-from dotenv import load_dotenv
+import feedparser, dateparser, os, os.path, json, requests
+
 from datetime import datetime, timezone
 
-# load .env file
-load_dotenv()
+
+rss_url="*RSSURL*"
+
+author_contains=""
+
+greenapi_instance_id ="greenapiid"
+greenapi_api_token ="token"
+whatsapp_group_id="whatsappgroupname"
 
 #-------------------------------------------------------------------------------
 #       READ / WRITE TIMESTAMP
@@ -29,25 +35,12 @@ def get_last_post_timestamp() -> int:
 
     return last_post_update
 
-
-#-------------------------------------------------------------------------------
-#       TWITTER API AUTHENTIFICATION!
-#-------------------------------------------------------------------------------
-
-# authentication of consumer key and secret
-auth = tweepy.OAuthHandler(os.getenv("twitter_consumer_key"), os.getenv("twitter_consumer_secret"))
-
-# authentication of access token and secret
-auth.set_access_token(os.getenv("twitter_access_token"), os.getenv("twitter_access_token_secret"))
-api = tweepy.API(auth)
-
-
 #-------------------------------------------------------------------------------
 #       loop every article
 #-------------------------------------------------------------------------------
 
 # fetch all articles by rss feed
-all_articles = feedparser.parse(os.getenv("rss_url"))
+all_articles = feedparser.parse(rss_url)
 last_post_timestamp = get_last_post_timestamp()
 
 for article in all_articles["entries"]:
@@ -57,13 +50,19 @@ for article in all_articles["entries"]:
     article_link = article["link"]
     article_author = article["author"]
     article_timestamp = int(dateparser.parse(article["published"]).timestamp())
+    article_post = "New News: " + article_name + " , " + article_link
 
     # if article is older than last post -> exit process
     if last_post_timestamp > article_timestamp:
+        print("I will Stop now")
         break
 
-    # author contains name
-    if article_author.__contains__(os.getenv("author_contains")):
-        # send tweet
-        api.update_status(status="Neuer Blogartikel:\n"+article_link)
-        print("Neuer Blogartikel:\n"+article_link)
+    # send WhatsApp Message via API
+    url = "https://api.green-api.com/waInstance*greenapiinstance*/sendMessage/*TOKEN*"
+    payload = {'chatId': whatsapp_group_id, 'message': article_post}
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.request("POST", url, headers=headers, json=payload)
+    print(response.text.encode('utf8'))
+    
